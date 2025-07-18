@@ -1,0 +1,6 @@
+v1.0.2 - 18/Jul/2024
+----------------------
+- Corregido error en sistema de licencias
+- Mejorado rendimiento de consultas
+- Añadida validación de conexiones
+- Se añadio actualizaciones Automaticas

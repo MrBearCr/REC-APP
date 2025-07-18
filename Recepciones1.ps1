@@ -1,4 +1,167 @@
-﻿# --- Configuración de licencia (segura) ---
+﻿# ================= SISTEMA DE ACTUALIZACIÓN AUTOMÁTICA MEJORADO =================
+$currentVersion = "1.0.2"  # ¡ACTUALIZAR EN CADA RELEASE!
+
+# Configuración
+$updateConfig = @{
+    VersionUrl = "https://tu-servidor.com/RecepcionesApp/version.txt"
+    ReleaseNotesUrl = "https://tu-servidor.com/RecepcionesApp/release_notes.txt"
+    UpdateExeUrl = "https://tu-servidor.com/RecepcionesApp/Recepciones1.exe"
+    LocalExePath = "$PSScriptRoot\Recepciones1.exe"
+    TempUpdatePath = "$env:TEMP\Recepciones1_new_$([System.Guid]::NewGuid().ToString('N')).exe"
+    LogPath = "$PSScriptRoot\update_log.txt"
+    MaxRetries = 3
+    RetryDelay = 5  # segundos
+}
+
+function Write-Log {
+    param([string]$message)
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    Add-Content -Path $updateConfig.LogPath -Value "$timestamp `t $message"
+}
+
+function Test-FileLock {
+    param([string]$path)
+    try {
+        [IO.File]::OpenWrite($path).Close()
+        return $false
+    } catch {
+        return $true
+    }
+}
+
+function Invoke-SafeWebRequest {
+    param($Url, $OutFile, [int]$RetryCount = 0)
+    
+    try {
+        Invoke-WebRequest -Uri $Url -OutFile $OutFile -UseBasicParsing
+        return $true
+    } catch {
+        if ($RetryCount -lt $updateConfig.MaxRetries) {
+            Write-Log "Reintentando descarga ($($RetryCount+1)/$($updateConfig.MaxRetries))..."
+            Start-Sleep -Seconds $updateConfig.RetryDelay
+            return Invoke-SafeWebRequest -Url $Url -OutFile $OutFile -RetryCount ($RetryCount + 1)
+        }
+        throw "Error después de $($updateConfig.MaxRetries) intentos: $_"
+    }
+}
+
+# Iniciar log
+Write-Log "=== Inicio verificación de actualizaciones ==="
+Write-Log "Versión actual: $currentVersion"
+
+try {
+    # Obtener versión remota
+    $remoteVersion = (Invoke-SafeWebRequest -Url $updateConfig.VersionUrl -OutFile "$env:TEMP\version_temp.txt" | Get-Content) -replace '\s'
+    
+    Write-Log "Versión remota: $remoteVersion"
+    
+    if ([System.Version]$remoteVersion -gt [System.Version]$currentVersion) {
+        Write-Log "Nueva versión disponible: $remoteVersion"
+        
+        # Descargar nueva versión
+        Invoke-SafeWebRequest -Url $updateConfig.UpdateExeUrl -OutFile $updateConfig.TempUpdatePath
+        Write-Log "Actualización descargada en: $($updateConfig.TempUpdatePath)"
+        
+        # Verificar integridad del archivo
+        $fileSize = (Get-Item $updateConfig.TempUpdatePath).Length
+        if ($fileSize -lt 100KB) {
+            throw "Archivo descargado demasiado pequeño ($fileSize bytes). Posible error de descarga."
+        }
+        Write-Log "Tamaño del archivo verificado: $($fileSize/1MB) MB"
+
+        # Obtener notas de versión
+        $notes = Invoke-SafeWebRequest -Url $updateConfig.ReleaseNotesUrl -OutFile "$env:TEMP\release_notes_temp.txt" | Get-Content
+        
+        # Mostrar notificación no bloqueante
+        $notifyScript = {
+            param($notes, $version)
+            Add-Type -AssemblyName PresentationFramework
+            [System.Windows.MessageBox]::Show(
+                "Nueva versión $version disponible. Se actualizará al reiniciar.`n`n$notes",
+                "Actualización Disponible",
+                'OK',
+                'Information'
+            )
+        }
+        Start-Job -ScriptBlock $notifyScript -ArgumentList $notes, $remoteVersion | Out-Null
+
+        # Preparar script auxiliar mejorado
+        $updaterScript = @"
+# Reiniciar como administrador si es necesario
+param([bool]\$IsAdmin = $([bool]([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)))
+
+function Wait-FileUnlock {
+    param([string]\$path, [int]\$maxSeconds = 30)
+    \$start = Get-Date
+    while ((Test-Path \$path) -and (Test-FileLock \$path) -and ((Get-Date) - \$start).TotalSeconds -lt \$maxSeconds) {
+        Start-Sleep -Seconds 2
+    }
+}
+
+Write-Host "Iniciando proceso de actualización..."
+Start-Sleep -Seconds 3  # Esperar a que la instancia anterior se cierre
+
+try {
+    # Esperar a que el archivo se libere
+    Wait-FileUnlock -path '$($updateConfig.LocalExePath)'
+    
+    if (Test-Path '$($updateConfig.LocalExePath)') {
+        Remove-Item -Path '$($updateConfig.LocalExePath)' -Force -ErrorAction Stop
+        Write-Host "Versión anterior eliminada"
+    }
+    
+    Move-Item -Path '$($updateConfig.TempUpdatePath)' -Destination '$($updateConfig.LocalExePath)' -Force
+    Write-Host "Nueva versión instalada"
+    
+    # Ejecutar como administrador si es necesario
+    if (-not \$IsAdmin) {
+        Start-Process -FilePath '$($updateConfig.LocalExePath)' -Verb RunAs
+    } else {
+        Start-Process -FilePath '$($updateConfig.LocalExePath)'
+    }
+    
+    Write-Host "Nueva instancia iniciada"
+    exit 0
+} catch {
+    Write-Host "Error en actualización: \$_"
+    [System.Windows.MessageBox]::Show(
+        "Error durante la actualización: \$_`nPor favor actualice manualmente.",
+        "Error de Actualización",
+        'OK',
+        'Error'
+    )
+    exit 1
+}
+"@
+        $updaterPath = "$env:TEMP\update_helper_$([System.Guid]::NewGuid().ToString('N')).ps1"
+        $updaterScript | Out-File -FilePath $updaterPath -Encoding UTF8
+        Write-Log "Script auxiliar creado en $updaterPath"
+
+        # Iniciar proceso de actualización
+        $psArgs = @{
+            FilePath = "powershell.exe"
+            ArgumentList = "-ExecutionPolicy Bypass -File `"$updaterPath`""
+            Wait = $false
+        }
+        Start-Process @psArgs
+        
+        Write-Log "Actualización iniciada. Cerrando aplicación..."
+        exit
+    } else {
+        Write-Log "No hay actualizaciones disponibles"
+    }
+}
+catch {
+    $errMsg = "Error en sistema de actualización: $_"
+    Write-Host $errMsg
+    Write-Log "ERROR: $errMsg"
+    # Continuar con la ejecución normal
+}
+
+# ================= FIN DEL SISTEMA DE ACTUALIZACIÓN =================
+
+
+# --- Configuración de licencia (segura) ---
 $licPath = "$env:APPDATA\BDConnector\license.txt"
 $lastCheckPath = "$env:APPDATA\BDConnector\lastcheck.txt"
 $salt = "bdc0nn3c70R_S3cur1ty_S4lt_v2"  # Secreto para prevenir ataques de diccionario
