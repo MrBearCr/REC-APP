@@ -1,11 +1,15 @@
-﻿# ================= SISTEMA DE ACTUALIZACIÓN AUTOMÁTICA MEJORADO =================
-$currentVersion = "1.0.2"  # ¡ACTUALIZAR EN CADA RELEASE!
+﻿# ================= SISTEMA DE ACTUALIZACIÓN AUTOMÁTICA CORREGIDO =================
+$currentVersion = "1.0.1"  # ¡ACTUALIZAR EN CADA RELEASE!
 
-# Configuración
+# Configuración GitHub
+$githubUser = "MrBearCr"
+$repoName = "REC-APP"
+$branch = "main"
+
 $updateConfig = @{
-    VersionUrl = "https://tu-servidor.com/RecepcionesApp/version.txt"
-    ReleaseNotesUrl = "https://tu-servidor.com/RecepcionesApp/release_notes.txt"
-    UpdateExeUrl = "https://tu-servidor.com/RecepcionesApp/Recepciones1.exe"
+    VersionUrl = "https://raw.githubusercontent.com/$githubUser/$repoName/$branch/version.txt"
+    ReleaseNotesUrl = "https://raw.githubusercontent.com/$githubUser/$repoName/$branch/release_notes.txt"
+    UpdateExeUrl = "https://github.com/$githubUser/$repoName/releases/download/v{0}/Recepciones1.exe"
     LocalExePath = "$PSScriptRoot\Recepciones1.exe"
     TempUpdatePath = "$env:TEMP\Recepciones1_new_$([System.Guid]::NewGuid().ToString('N')).exe"
     LogPath = "$PSScriptRoot\update_log.txt"
@@ -50,112 +54,104 @@ Write-Log "=== Inicio verificación de actualizaciones ==="
 Write-Log "Versión actual: $currentVersion"
 
 try {
-    # Obtener versión remota
-    $remoteVersion = (Invoke-SafeWebRequest -Url $updateConfig.VersionUrl -OutFile "$env:TEMP\version_temp.txt" | Get-Content) -replace '\s'
-    
-    Write-Log "Versión remota: $remoteVersion"
-    
-    if ([System.Version]$remoteVersion -gt [System.Version]$currentVersion) {
-        Write-Log "Nueva versión disponible: $remoteVersion"
+    # Obtener versión remota (CORREGIDO)
+    $tempVersionPath = [System.IO.Path]::GetTempFileName()
+    if (Invoke-SafeWebRequest -Url $updateConfig.VersionUrl -OutFile $tempVersionPath) {
+        $remoteVersionText = (Get-Content -Path $tempVersionPath -Raw).Trim()
+        Write-Log "Versión remota leída: '$remoteVersionText'"
         
-        # Descargar nueva versión
-        Invoke-SafeWebRequest -Url $updateConfig.UpdateExeUrl -OutFile $updateConfig.TempUpdatePath
-        Write-Log "Actualización descargada en: $($updateConfig.TempUpdatePath)"
+        # Convertir a versión
+        $remoteVersion = [System.Version]$remoteVersionText
+        $currentVersionObj = [System.Version]$currentVersion
         
-        # Verificar integridad del archivo
-        $fileSize = (Get-Item $updateConfig.TempUpdatePath).Length
-        if ($fileSize -lt 100KB) {
-            throw "Archivo descargado demasiado pequeño ($fileSize bytes). Posible error de descarga."
-        }
-        Write-Log "Tamaño del archivo verificado: $($fileSize/1MB) MB"
+        if ($remoteVersion -gt $currentVersionObj) {
+            Write-Log "Nueva versión disponible: $remoteVersion"
+            
+            # Construir URL dinámica
+            $exeUrl = $updateConfig.UpdateExeUrl -f $remoteVersion.ToString()
+            
+            # Descargar nueva versión
+            if (Invoke-SafeWebRequest -Url $exeUrl -OutFile $updateConfig.TempUpdatePath) {
+                Write-Log "Actualización descargada en: $($updateConfig.TempUpdatePath)"
+                
+                # Verificar integridad
+                $fileSize = (Get-Item $updateConfig.TempUpdatePath).Length
+                if ($fileSize -lt 100KB) {
+                    throw "Archivo demasiado pequeño ($fileSize bytes)"
+                }
+                Write-Log "Tamaño verificado: $($fileSize/1MB) MB"
 
-        # Obtener notas de versión
-        $notes = Invoke-SafeWebRequest -Url $updateConfig.ReleaseNotesUrl -OutFile "$env:TEMP\release_notes_temp.txt" | Get-Content
-        
-        # Mostrar notificación no bloqueante
-        $notifyScript = {
-            param($notes, $version)
-            Add-Type -AssemblyName PresentationFramework
-            [System.Windows.MessageBox]::Show(
-                "Nueva versión $version disponible. Se actualizará al reiniciar.`n`n$notes",
-                "Actualización Disponible",
-                'OK',
-                'Information'
-            )
-        }
-        Start-Job -ScriptBlock $notifyScript -ArgumentList $notes, $remoteVersion | Out-Null
+                # Obtener notas de versión
+                $tempNotesPath = [System.IO.Path]::GetTempFileName()
+                if (Invoke-SafeWebRequest -Url $updateConfig.ReleaseNotesUrl -OutFile $tempNotesPath) {
+                    $notes = Get-Content -Path $tempNotesPath -Raw
+                }
 
-        # Preparar script auxiliar mejorado
-        $updaterScript = @"
-# Reiniciar como administrador si es necesario
-param([bool]\$IsAdmin = $([bool]([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)))
+                # Mostrar notificación no bloqueante
+                if ($notes) {
+                    $notifyScript = {
+                        param($notes, $version)
+                        Add-Type -AssemblyName PresentationFramework
+                        [System.Windows.MessageBox]::Show(
+                            "Nueva versión $version disponible:`n`n$notes",
+                            "Actualización Disponible",
+                            'OK',
+                            'Information'
+                        )
+                    }
+                    Start-Job -ScriptBlock $notifyScript -ArgumentList $notes, $remoteVersion | Out-Null
+                }
 
-function Wait-FileUnlock {
-    param([string]\$path, [int]\$maxSeconds = 30)
-    \$start = Get-Date
-    while ((Test-Path \$path) -and (Test-FileLock \$path) -and ((Get-Date) - \$start).TotalSeconds -lt \$maxSeconds) {
-        Start-Sleep -Seconds 2
-    }
-}
-
-Write-Host "Iniciando proceso de actualización..."
-Start-Sleep -Seconds 3  # Esperar a que la instancia anterior se cierre
+                # Preparar script auxiliar
+                $updaterScript = @"
+                
+# Reinicio seguro
+Start-Sleep -Seconds 3
 
 try {
-    # Esperar a que el archivo se libere
-    Wait-FileUnlock -path '$($updateConfig.LocalExePath)'
+    # Esperar liberación del archivo
+    `$maxWait = 30
+    `$start = Get-Date
+    while ((Test-Path '$($updateConfig.LocalExePath)') -and (Test-FileLock '$($updateConfig.LocalExePath)') -and ((Get-Date) - `$start).TotalSeconds -lt `$maxWait) {
+        Start-Sleep -Seconds 2
+    }
     
     if (Test-Path '$($updateConfig.LocalExePath)') {
         Remove-Item -Path '$($updateConfig.LocalExePath)' -Force -ErrorAction Stop
-        Write-Host "Versión anterior eliminada"
     }
     
     Move-Item -Path '$($updateConfig.TempUpdatePath)' -Destination '$($updateConfig.LocalExePath)' -Force
-    Write-Host "Nueva versión instalada"
-    
-    # Ejecutar como administrador si es necesario
-    if (-not \$IsAdmin) {
-        Start-Process -FilePath '$($updateConfig.LocalExePath)' -Verb RunAs
-    } else {
-        Start-Process -FilePath '$($updateConfig.LocalExePath)'
-    }
-    
-    Write-Host "Nueva instancia iniciada"
+    Start-Process -FilePath '$($updateConfig.LocalExePath)'
     exit 0
 } catch {
-    Write-Host "Error en actualización: \$_"
     [System.Windows.MessageBox]::Show(
-        "Error durante la actualización: \$_`nPor favor actualice manualmente.",
-        "Error de Actualización",
+        "Error de actualización: `$_`nReinstale manualmente desde GitHub.",
+        "Error Crítico",
         'OK',
         'Error'
     )
     exit 1
 }
 "@
-        $updaterPath = "$env:TEMP\update_helper_$([System.Guid]::NewGuid().ToString('N')).ps1"
-        $updaterScript | Out-File -FilePath $updaterPath -Encoding UTF8
-        Write-Log "Script auxiliar creado en $updaterPath"
+                # Crear helper dinámico
+                $updaterPath = "$env:TEMP\update_helper_$([guid]::NewGuid().ToString('N')).ps1"
+                $updaterScript | Out-File -FilePath $updaterPath -Encoding UTF8
+                Write-Log "Script auxiliar creado: $updaterPath"
 
-        # Iniciar proceso de actualización
-        $psArgs = @{
-            FilePath = "powershell.exe"
-            ArgumentList = "-ExecutionPolicy Bypass -File `"$updaterPath`""
-            Wait = $false
+                # Iniciar actualización
+                Start-Process powershell.exe -ArgumentList "-ExecutionPolicy Bypass -File `"$updaterPath`""
+                Write-Log "Actualización iniciada. Saliendo..."
+                exit
+            }
+        } else {
+            Write-Log "No hay actualizaciones disponibles (Versión local: $currentVersion >= Remota: $remoteVersion)"
         }
-        Start-Process @psArgs
-        
-        Write-Log "Actualización iniciada. Cerrando aplicación..."
-        exit
-    } else {
-        Write-Log "No hay actualizaciones disponibles"
     }
 }
 catch {
-    $errMsg = "Error en sistema de actualización: $_"
+    $errMsg = "Error en actualización: $_"
     Write-Host $errMsg
-    Write-Log "ERROR: $errMsg"
-    # Continuar con la ejecución normal
+    Write-Log $errMsg
 }
 
 # ================= FIN DEL SISTEMA DE ACTUALIZACIÓN =================
