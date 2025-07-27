@@ -867,13 +867,9 @@ no compares tener mi corazon , y que decidieras mirar a un lado mientras estabas
         
         // Event listeners para diferentes dispositivos
         heartContainer.addEventListener('click', showLetter);
-        heartContainer.addEventListener('touchstart', function(e) {
-            e.preventDefault(); // Prevenir comportamiento por defecto
-            showLetter();
-        }, { passive: false });
+        
         
         closeBtn.addEventListener('click', hideLetter);
-        closeBtn.addEventListener('touchstart', hideLetter);
         
         // Ocultar carta al hacer clic fuera de ella
         letterContainer.addEventListener('click', function(e) {
