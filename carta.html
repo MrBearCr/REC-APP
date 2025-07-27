@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Un ramo para ti</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+        
+        body {
+            height: 100vh;
+            width: 100%;
+            background: linear-gradient(135deg, #080f1a 0%, #1a2a4a 100%);
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Contenedor principal responsivo */
+        .main-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: 70vh;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .scene {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* Flor ajustada para móviles */
+        .container {
+            position: absolute;
+            left: 50%;
+            top: 30%;
+            transform: translate(-50%, -50%) scale(0.8);
+            z-index: 10;
+        }
+        
+        .glass {
+            height: 600px;
+            width: 450px;
+            background: #122139;
+            border-radius: 225px 225px 0px 0px;
+        }
+        
+        .glass:before {
+            content: "";
+            height: 30px;
+            width: 30px;
+            transform-origin: center;
+            border: 20px solid #122139;
+            border-radius: 100%;
+            position: absolute;
+            left: 192px;
+            top: -56px;
+        }
+        
+        .glass:after {
+            content: "";
+            position: absolute;
+            height: 12px;
+            width: 450px;
+            background: #a52a2a;
+            top: 100%;
+            left: 0%;
+        }
+        
+        .shine {
+            width: 20px;
+            height: 250px;
+            background: white;
+            opacity: 0.2;
+            position: absolute;
+            left: 85%;
+            top: 150px;
+            border-radius: 75px;
+            z-index: 10;
+        }
+        
+        .shine:before {
+            content: "";
+            width: 20px;
+            height: 30px;
+            position: absolute;
+            background: white;
+            top: 275px;
+            border-radius: 75px;
+        }
+        
+        .petals>div {
+            position: absolute;
+            background: #d52d58;
+            width: 64px;
+            height: 90px;
+            top: 150px;
+            transition: all 0.5s ease-out;
+        }
+        
+        .petals>div:nth-child(1) {
+            border-radius: 11px;
+            box-shadow: 0px 0px 45px rgba(245, 148, 184, 1);
+            left: 201px;
+            top: 150px;
+            background: #d52d58;
+        }
+        
+        .petals>div:nth-child(2),
+        .petals>div:nth-child(4),
+        .petals>div:nth-child(6) {
+            background: #b81b43;
+            left: 173px;
+            border-radius: 0px 37px 0px 37px;
+            transform-origin: bottom right;
+        }
+        
+        .petals>div:nth-child(3),
+        .petals>div:nth-child(5),
+        .petals>div:nth-child(7) {
+            background: #b81b43;
+            left: 225px;
+            border-radius: 37px 0px 37px 0px;
+            transform-origin: bottom left;
+        }
+        
+        .petals>div:nth-child(2) {
+            z-index: 5;
+            background: #ab1a3f;
+            top: 164px;
+            height: 98px;
+            box-shadow: 0px 0px 45px rgba(245, 148, 184, .5);
+            animation: bloom2 3s ease-in-out;
+            animation-fill-mode: forwards;
+        }
+        
+        .petals>div:nth-child(3) {
+            z-index: 4;
+            background: #ab1a3f;
+            top: 164px;
+            height: 98px;
+            box-shadow: 0px 0px 45px rgba(245, 148, 184, .5);
+            animation: bloom3 3s ease-in-out, glowing 2.5s ease-in-out infinite;
+            animation-fill-mode: forwards;
+        }
+        
+        .petals>div:nth-child(4) {
+            z-index: 3;
+            background: #b81b43;
+            top: 160px;
+            height: 101px;
+            box-shadow: 0px 0px 45px rgba(245, 148, 184, .5);
+            animation: bloom4 3s ease-in-out, glowing 2.5s ease-in-out infinite;
+            animation-fill-mode: forwards;
+        }
+        
+        .petals>div:nth-child(5) {
+            z-index: 2;
+            background: #b81b43;
+            top: 160px;
+            height: 101px;
+            box-shadow: 0px 0px 45px rgba(245, 148, 184, .5);
+            animation: bloom5 3s ease-in-out, glowing 2.5s ease-in-out infinite;
+            animation-fill-mode: forwards;
+        }
+        
+        .petals>div:nth-child(6) {
+            z-index: 1;
+            background: #c9204b;
+            top: 150px;
+            height: 98px;
+            box-shadow: 0px 0px 45px rgba(245, 148, 184, .3);
+            animation: bloom6 3s ease-in-out, glowing 2.5s ease-in-out infinite;
+            animation-fill-mode: forwards;
+        }
+        
+        .petals>div:nth-child(7) {
+            z-index: 0;
+            background: #c9204b;
+            top: 150px;
+            height: 98px;
+            box-shadow: 0px 0px 45px rgba(245, 148, 184, .3);
+            animation: bloom7 3s ease-in-out, glowing 2.5s ease-in-out infinite;
+            animation-fill-mode: forwards;
+        }
+        
+        .deadPetals>div {
+            position: absolute;
+            background: #d52d58;
+            width: 15px;
+            height: 11px;
+            top: 150px;
+            border-radius: 0px 22px 0px 22px;
+            box-shadow: 0px 0px 22px rgba(245, 148, 184, .5);
+            transition: all 0.5s ease-out;
+        }
+        
+        .deadPetals>div:nth-child(1) {
+            left: 119229959987px;
+            transform: rotate(-30deg);
+            animation: falling 20s 4s ease-in-out infinite;
+        }
+        
+        .deadPetals>div:nth-child(2) {
+            left: 26331084746px;
+            transform: rotate(-30deg);
+            animation: falling 20s 8s ease-in-out infinite;
+        }
+        
+        .deadPetals>div:nth-child(3) {
+            left: 129759500363px;
+            transform: rotate(-30deg);
+            animation: falling 20s 12s ease-in-out infinite;
+        }
+        
+        .deadPetals>div:nth-child(4) {
+            left: 99323149959px;
+            transform: rotate(-30deg);
+            animation: falling 20s 16s ease-in-out infinite;
+        }
+        
+        .leaves>div:nth-last-child(1) {
+            position: absolute;
+            width: 41px;
+            height: 22px;
+            background: #338f37;
+            top: 251px;
+            left: 209px;
+            border-radius: 75px;
+        }
+        
+        .leaves>div:nth-child(1) {
+            position: absolute;
+            width: 11px;
+            height: 293px;
+            background: #054c05;
+            top: 231px;
+            left: 225px;
+            border-radius: 0 0 75px 75px;
+        }
+        
+        .leaves>div:nth-child(2) {
+            position: absolute;
+            width: 45px;
+            height: 75px;
+            border-radius: 8px 60px 30px 60px;
+            background: #054c05;
+            transform-origin: bottom;
+            transform: rotate(-30deg);
+            top: 309px;
+            left: 191px;
+            box-shadow: inset 8px 8px #066406;
+        }
+        
+        .leaves>div:nth-child(3) {
+            position: absolute;
+            width: 45px;
+            height: 75px;
+            border-radius: 60px 1px 60px 30px;
+            background: #054c05;
+            transform-origin: bottom;
+            transform: rotate(30deg);
+            top: 270px;
+            left: 225px;
+            box-shadow: inset -8px 8px #066406;
+        }
+        
+        .thorns>div {
+            position: absolute;
+            width: 0;
+            height: 0;
+            top: 150px;
+        }
+        
+        .thorns>div:nth-child(odd) {
+            border-top: 11px solid transparent;
+            border-bottom: 11px solid transparent;
+            border-left: 11px solid #054c05;
+            left: 236px;
+        }
+        
+        .thorns>div:nth-child(even) {
+            border-top: 11px solid transparent;
+            border-bottom: 11px solid transparent;
+            border-right: 11px solid #054c05;
+            left: 214px;
+        }
+        
+        .thorns>div:nth-child(1) {
+            top: 349px;
+        }
+        
+        .thorns>div:nth-child(2) {
+            top: 293px;
+        }
+        
+        .thorns>div:nth-child(4) {
+            top: 394px;
+        }
+        
+        @keyframes bloom2 {
+            50% {
+                transform: rotate(-90deg);
+                top: 300px;
+                left: 113px;
+            }
+            
+            100% {
+                transform: rotate(-60deg);
+                top: 461px;
+                left: 75px;
+                background: #71122a;
+                box-shadow: 0px 0px 0px rgba(245, 148, 184, 0);
+            }
+        }
+        
+        @keyframes bloom3 {
+            100% {
+                transform: rotate(50deg);
+            }
+        }
+        
+        @keyframes bloom4 {
+            100% {
+                transform: rotate(-25deg);
+            }
+        }
+        
+        @keyframes bloom5 {
+            100% {
+                transform: rotate(25deg);
+            }
+        }
+        
+        @keyframes bloom6 {
+            100% {
+                transform: rotate(-10deg);
+            }
+        }
+        
+        @keyframes bloom7 {
+            100% {
+                transform: rotate(10deg);
+            }
+        }
+        
+        @keyframes glowing {
+            50% {
+                background: #d7365f;
+                box-shadow: 0px 0px 45px rgba(245, 148, 184, 1);
+            }
+        }
+        
+        @keyframes falling {
+            20% {
+                top: 251px;
+                background: #9d193b;
+                box-shadow: 0px 0px 0px rgba(245, 148, 184, 0);
+            }
+            
+            100% {
+                top: 251px;
+                opacity: 0;
+            }
+        }
+        
+        /* Corazón palpitante para móviles */
+        .heart-container {
+            position: absolute;
+            bottom: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            cursor: pointer;
+            text-align: center;
+            touch-action: manipulation;
+        }
+        
+        .heart {
+            position: relative;
+            width: 70px;
+            height: 63px;
+            animation: heartbeat 1.2s infinite;
+            filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.6));
+        }
+        
+        .heart:before,
+        .heart:after {
+            content: "";
+            position: absolute;
+            top: 0;
+            width: 36px;
+            height: 56px;
+            background: #e53935;
+            border-radius: 35px 35px 0 0;
+        }
+        
+        .heart:before {
+            left: 35px;
+            transform: rotate(-45deg);
+            transform-origin: 0 100%;
+        }
+        
+        .heart:after {
+            left: 0;
+            transform: rotate(45deg);
+            transform-origin: 100% 100%;
+        }
+        
+        .heart-label {
+            color: #fff;
+            margin-top: 12px;
+            font-size: 16px;
+            text-shadow: 0 0 5px rgba(0,0,0,0.7);
+            opacity: 0.9;
+            transition: opacity 0.3s;
+            font-weight: 500;
+        }
+        
+        .heart-container:hover .heart-label {
+            opacity: 1;
+        }
+        
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            10% { transform: scale(1.1); }
+            20% { transform: scale(1); }
+            30% { transform: scale(1.15); }
+            40% { transform: scale(1); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Carta de amor */
+        .letter-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            padding: 15px;
+        }
+        
+        .letter-container.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .letter {
+            background: linear-gradient(to bottom right, #fffdf6, #f9f0e1);
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            transform: translateY(20px);
+            transition: transform 0.5s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 2px solid #e53935;
+        }
+        
+        .letter-container.visible .letter {
+            transform: translateY(0);
+        }
+        
+        .letter-header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e53935;
+            padding-bottom: 15px;
+        }
+        
+        .letter-header h2 {
+            color: #e53935;
+            font-size: 28px;
+            margin: 0;
+            font-family: 'Georgia', serif;
+        }
+        
+        .letter-content {
+            line-height: 1.7;
+            color: #333;
+            font-size: 17px;
+            font-family: 'Georgia', serif;
+        }
+        
+        .letter-content p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        .letter-signature {
+            margin-top: 25px;
+            text-align: right;
+            font-style: italic;
+            color: #e53935;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #e53935;
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            font-size: 22px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+        
+        .close-btn:hover {
+            transform: scale(1.1);
+            background: #c62828;
+        }
+        
+        /* Decoración de pétalos flotantes */
+        .floating-petals {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        .petal {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: #d52d58;
+            border-radius: 50% 0 50% 50%;
+            opacity: 0.7;
+            filter: blur(1px);
+            animation: float 15s linear infinite;
+        }
+        
+        @keyframes float {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* Mensaje para móviles */
+        .mobile-message {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            padding: 0 20px;
+            z-index: 50;
+        }
+
+        /* Nuevo contador */
+        .countdown-container {
+            position: absolute;
+            bottom: 35px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            z-index: 100;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        
+        .countdown-text {
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        .countdown-timer {
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        
+        /* Ajustes para pantallas pequeñas */
+        @media (max-width: 480px) {
+            .container {
+                transform: translate(-50%, -50%) scale(0.65);
+                top: 25%;
+            }
+            
+            .heart {
+                width: 60px;
+                height: 54px;
+            }
+            
+            .heart:before, .heart:after {
+                width: 31px;
+                height: 48px;
+            }
+            
+            .heart:before {
+                left: 30px;
+            }
+            
+            .heart-label {
+                font-size: 14px;
+            }
+            
+            .letter {
+                padding: 25px 20px;
+            }
+            
+            .letter-header h2 {
+                font-size: 24px;
+            }
+            
+            .letter-content {
+                font-size: 16px;
+            }
+            
+            .letter-signature {
+                font-size: 16px;
+            }
+            
+            .countdown-container {
+                bottom: 70px;
+                font-size: 16px;
+            }
+            
+            .countdown-timer {
+                font-size: 20px;
+            }
+        }
+        
+        @media (max-height: 600px) {
+            .container {
+                transform: translate(-50%, -50%) scale(0.55);
+            }
+            
+            .heart-container {
+                bottom: 5%;
+            }
+            
+            .countdown-container {
+                bottom: 60px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-container">
+        <div class="scene">
+            <div class="container">
+                <div class="glass">
+                    <div class="shine"></div>
+                </div>
+                <div class="thorns">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <div class="leaves">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <div class="petals">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <div class="deadPetals">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contador para la carta -->
+        
+        
+        <!-- Corazón pulsante -->
+        <div class="heart-container" id="heartContainer">
+            <div class="heart"></div>
+        </div>
+
+        <div class="countdown-container">
+            <div class="countdown-text">se mostrará en:</div>
+            <div top="200px"class="countdown-timer" id="countdownTimer">00:00:00</div>
+        </div>
+        
+        <!-- Pétalos flotantes decorativos -->
+        <div class="floating-petals" id="floatingPetals"></div>
+        
+        
+    </div>
+    
+    <!-- Carta oculta -->
+    <div class="letter-container" id="letterContainer">
+        <div class="letter">
+            <button class="close-btn" id="closeBtn">&times;</button>
+            <div class="letter-header">
+                <h2>Sofi...</h2>
+            </div>
+            <div class="letter-content">
+                <p>Me decepcione , me decepcione de ti , de tus palabras , de tus acciones, de tu perdon 
+</p>
+                
+<p>para que esforzarme , si teniendome buscas a alguien mas </p>                
+                <p>
+para que hacer que me quedara si no te hago feliz</p>
+                
+                <p>porque me negabas todo lo que podias dar , claro no a mi</p>
+                
+                <p>Si , yo la cague mucho , pero tu decidiste seguir </p>
+                
+                <p>yo quise , tu tambien, no lo compares </p>
+                
+                <p>
+no compares tener mi corazon , y que decidieras mirar a un lado mientras estabas con otro </p>
+<p>quiero confiar en ti? puedo? despues de tanto , despues de que me mintieras siempre con eso</p>
+<p>es un amigo...son ideas tuyas...el quiere algo pero es su problema...yo te doy tu lugar...</p>
+<p>en verdad lo hacias? lo hiciste almenos? </p>
+<p>que premio tuve por querer estar contigo todo este tiempo </p>
+<p>por querer que funcionaran las cosas , querer "volver"</p>
+<p>encontrarte con otro </p>
+<p>despues de todo , estudiar , trabajar , esforzarme , siempre tuve tiempo para ti , este año quise todo lo mejor para ti por pensar que habria un "nosotros" </p>
+<p>y para que ? para que me pagaras asi ? </p>
+<p>no es justo no lo es </p>
+<p>pensar todo el año que si ponia todo de mi , mi corazon , mis paciencia , mis ganas llegariamos lejos pero por mas que diera , aun asi parece que fue insuficiente </p>
+<p>para que contruyeramos algo...hasta el mejor esfuerzo tiene limites</p>
+<p>pero estos dias estoy empezando a creer que , no te importa , no soy tu prioridad , no me ves , no me escuchas , estas ahi pero no estas , me dices querer </p>
+<p>pero no de verdad , me dices que te importo , pero no lo demuestras , Te preocupas por mi , solo cuando eso no moleste tu planes </p>
+<p>no se , contigo...no , por ti fui capaz de crecer , dejar el orgullo , el ego para reconocer que me equivoque en muchas cosas</p>
+<p>pero cuando lo haras tu? cuando veras mi esfuerzo , cuando dejaras de decirme palabras vacias , cuando podre ver el esfuerzo que tenias , el brillo por vernos , la confianza de contarme todo</p>
+<p>La paz que teniamos porque ya no tengo fuerzas , no solo , no para volver a lo mismo , no para descubrir algo distinto despues </p>
+<p>cuando volveras a mi ? cuando estaras para mi ? cuando me escucharas ?...cuando me pondras primero?..estas dispuesta?... mejoraras...dejeras todo por vivir? por un futuro?</p>
+<p> Sofi... me enamore de ti , de tu forma de ver la vida , de tu humor, de bondad fuiste mi inspiracion , mi fuerza , mi mayor alegria fuiste todo lo que me faltaba que no sabia...</p>
+<p>pero no de todo esto no de que me lastimes </p>
+<p>quiero escucharte ver que quieres decir , ver si de verdad quieres seguir...</p>
+            
+</div>
+            <div class="letter-signature">
+                <p>Rafa</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Obtener elementos
+        const heartContainer = document.getElementById('heartContainer');
+        const letterContainer = document.getElementById('letterContainer');
+        const closeBtn = document.getElementById('closeBtn');
+        const floatingPetals = document.getElementById('floatingPetals');
+        const countdownTimer = document.getElementById('countdownTimer');
+        
+        // Crear pétalos flotantes
+        function createFloatingPetals() {
+            const petalCount = 20;
+            for (let i = 0; i < petalCount; i++) {
+                const petal = document.createElement('div');
+                petal.classList.add('petal');
+                
+                // Posición aleatoria
+                const left = Math.random() * 100;
+                petal.style.left = `${left}%`;
+                
+                // Tamaño aleatorio
+                const size = 8 + Math.random() * 12;
+                petal.style.width = `${size}px`;
+                petal.style.height = `${size}px`;
+                
+                // Color aleatorio
+                const hue = 330 + Math.random() * 30;
+                petal.style.background = `hsl(${hue}, 70%, 60%)`;
+                
+                // Animación
+                const duration = 10 + Math.random() * 20;
+                const delay = Math.random() * 10;
+                petal.style.animation = `float ${duration}s linear ${delay}s infinite`;
+                
+                floatingPetals.appendChild(petal);
+            }
+        }
+        
+        // Mostrar carta
+        function showLetter() {
+            letterContainer.classList.add('visible');
+            document.body.style.overflow = 'hidden';
+            // Ocultar el contador
+            document.querySelector('.countdown-container').style.display = 'none';
+        }
+        
+        // Ocultar carta
+        function hideLetter() {
+            letterContainer.classList.remove('visible');
+            document.body.style.overflow = '';
+        }
+        
+        const targetDate = new Date(2025, 6, 27, 22, 0, 0)
+        // Función para actualizar el contador
+        function updateCountdown() {
+            const now = new Date();
+            const diff = targetDate - now;
+            
+            if (diff <= 0) {
+                // Si ya pasó la fecha objetivo, mostrar la carta después de 5 segundos
+                countdownTimer.textContent = '00:00:00';
+                setTimeout(showLetter, 8000); // 8 segundos
+                return;
+            }
+            
+            // Calcular días, horas, minutos y segundos
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            // Formatear para mostrar
+            countdownTimer.textContent = 
+                `${days.toString().padStart(2, '0')}d ${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
+        }
+        
+        // Event listeners para diferentes dispositivos
+        heartContainer.addEventListener('click', showLetter);
+        heartContainer.addEventListener('touchstart', function(e) {
+            e.preventDefault(); // Prevenir comportamiento por defecto
+            showLetter();
+        }, { passive: false });
+        
+        closeBtn.addEventListener('click', hideLetter);
+        closeBtn.addEventListener('touchstart', hideLetter);
+        
+        // Ocultar carta al hacer clic fuera de ella
+        letterContainer.addEventListener('click', function(e) {
+            if (e.target === letterContainer) {
+                hideLetter();
+            }
+        });
+        
+        // Ocultar carta al presionar Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                hideLetter();
+            }
+        });
+        
+        // Inicializar pétalos flotantes
+        createFloatingPetals();
+        
+        // Actualizar contador cada segundo
+        setInterval(updateCountdown, 1000);
+        updateCountdown(); // Inicializar inmediatamente
+        
+        // Asegurar que el corazón sea tappable en móviles
+        document.documentElement.style.touchAction = 'manipulation';
+    </script>
+</body>
+</html>
