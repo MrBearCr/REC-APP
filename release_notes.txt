@@ -1,6 +1,4 @@
-v1.0.2 - 18/Jul/2024
+v1.0.3 - 30/Jul/2025
 ----------------------
-- Corregido error en sistema de licencias
-- Mejorado rendimiento de consultas
-- Añadida validación de conexiones
-- Se añadio actualizaciones Automaticas
+- Se agrego ComboBox para NDC
+- Se provisiono un sistema de logs por caso de falla
